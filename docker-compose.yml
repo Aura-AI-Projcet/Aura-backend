@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  aura-backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - ENVIRONMENT=development
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - ALGORITHM_SERVICE_URL=${ALGORITHM_SERVICE_URL:-http://localhost:8001}
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    depends_on:
+      - algorithm-service
+    networks:
+      - aura-network
+
+  # Mock algorithm service for development
+  algorithm-service:
+    image: python:3.12-slim
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./scripts/mock_algorithm_service.py:/app/main.py
+    working_dir: /app
+    command: >
+      sh -c "pip install fastapi uvicorn && 
+             python main.py"
+    networks:
+      - aura-network
+
+networks:
+  aura-network:
+    driver: bridge
