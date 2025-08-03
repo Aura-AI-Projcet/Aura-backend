@@ -3,30 +3,47 @@
 
 ## 1. 概述
 
-Aura 项目的开发和部署将遵循“本地开发 -> 预测试 -> 正式环境”的三阶段策略，确保代码质量、功能稳定性和快速迭代。我们将充分利用 Supabase 作为后端服务，并为每个环境配置独立的 Supabase 项目。
+Aura 项目采用现代化的云原生部署策略，基于"本地开发 -> 预测试 -> 正式环境"的三阶段策略，确保代码质量、功能稳定性和快速迭代。系统以阿里云 Serverless 应用引擎 (SAE) 为核心计算平台，Supabase 作为后端基础设施，实现高可用、弹性扩展的服务部署。
 
 ## 2. 环境定义与配置
 
 ### 2.1 本地开发环境 (Local Development)
 
 *   **目的**：为开发者提供独立的、快速反馈的开发环境，支持功能开发、调试和单元测试。
-*   **Supabase 集成**：
-    *   **推荐**：使用 `Supabase CLI` 在本地启动 Supabase 服务（包括 PostgreSQL 数据库、Auth、Storage 等）。这允许开发者完全控制数据库模式和数据，并进行快速的本地迭代。
-    *   **备选**：连接到共享的开发专用 Supabase 项目。这适用于需要多人协作调试后端集成或需要特定云服务的情况。
+*   **架构组件**：
+    *   **FastAPI BFF 服务**：在本地直接运行 `uvicorn main:app --reload`，支持热重载开发。
+    *   **AI 计算服务**：可选择本地运行或连接到开发环境的 AI 服务。
+    *   **Supabase 集成**：
+        *   **推荐**：使用 `Supabase CLI` 在本地启动 Supabase 服务（包括 PostgreSQL 数据库、Auth、Storage 等）。
+        *   **备选**：连接到共享的开发专用 Supabase 项目。
+*   **环境配置**：
+    *   使用 `.env.local` 文件管理本地环境变量。
+    *   配置本地 Supabase 连接信息、AI 服务端点等。
 *   **数据管理**：
     *   本地 Supabase 项目的数据应可被重置或填充测试数据。
     *   数据库模式变更应通过 `Supabase Migrations` 管理，并及时同步到代码库。
-*   **部署流程**：开发者在本地进行代码编写、功能测试。前端应用连接本地或开发专用的 Supabase 服务。
+*   **开发流程**：
+    1. 启动本地 Supabase：`supabase start`
+    2. 启动 FastAPI 服务：`uvicorn main:app --reload`
+    3. 启动 AI 服务（如需要）
+    4. Flutter 应用连接本地后端进行开发调试
 
 ### 2.2 预测试环境 (Staging Environment)
 
 *   **目的**：提供一个与生产环境高度相似的独立环境，用于集成测试、端到端测试、性能测试、用户验收测试 (UAT) 和 Bug Fix 验证。
+*   **阿里云 SAE 部署**：
+    *   **FastAPI BFF 服务**：部署为独立的 SAE 应用，配置 1-2 个实例。
+    *   **AI 计算服务**：部署为独立的 SAE 应用或函数计算，根据计算需求配置。
+    *   **负载均衡**：通过 SAE 内置网关或 SLB 提供统一入口。
 *   **Supabase 集成**：
-    *   配置一个独立的 Supabase 项目，与生产环境的 Supabase 配置相似。
+    *   配置独立的 Supabase 项目，与生产环境配置相似但使用较小的资源配额。
     *   数据应从生产环境脱敏同步或填充代表性测试数据。
 *   **部署流程**：
-    *   当开发分支（如 `develop` 或特性分支）的代码合并并通过初步测试后，自动或手动部署到预测试环境。
-    *   前端应用、API Gateway (Edge Functions/Vercel Functions) 和算法服务都部署到此环境。
+    *   当开发分支（如 `develop` 或特性分支）的代码合并并通过初步测试后，自动部署到预测试环境。
+    *   使用 GitHub Actions 或阿里云 DevOps 进行 CI/CD 自动化部署。
+*   **环境配置**：
+    *   使用 `.env.staging` 环境变量配置。
+    *   配置 SAE 应用的环境变量和密钥管理。
 *   **数据管理**：
     *   预测试环境的数据库模式应与生产环境保持同步，通过 Supabase Migrations 进行管理。
     *   定期清理或刷新数据，确保测试环境的干净。
@@ -34,18 +51,152 @@ Aura 项目的开发和部署将遵循“本地开发 -> 预测试 -> 正式环�
 ### 2.3 正式环境 (Production Environment)
 
 *   **目的**：面向最终用户提供稳定、高性能和高可用的服务。
+*   **阿里云 SAE 部署**：
+    *   **FastAPI BFF 服务**：部署为生产级 SAE 应用，支持自动扩缩容（最小 2 实例，最大 10 实例）。
+    *   **AI 计算服务**：根据业务需求部署为 SAE 应用或函数计算，优化成本和性能。
+    *   **负载均衡**：使用阿里云 SLB 提供高可用的流量分发。
+    *   **域名和 SSL**：配置自定义域名和 SSL 证书。
 *   **Supabase 集成**：
     *   配置独立的、生产级别的 Supabase 项目，具备高可用、备份恢复和监控能力。
-    *   严格的数据安全和访问控制。
+    *   严格的数据安全和访问控制，启用行级安全 (RLS)。
 *   **部署流程**：
     *   仅部署经过预测试环境充分验证的代码。
-    *   部署应通过自动化 CI/CD 管道进行，确保一致性和可靠性。
-    *   需要回滚策略以应对紧急问题。
+    *   使用蓝绿部署或滚动更新策略，确保零停机部署。
+    *   部署应通过自动化 CI/CD 管道进行，包括自动化测试、安全扫描等。
+*   **监控和告警**：
+    *   集成阿里云监控服务，监控 SAE 应用性能、错误率、响应时间等。
+    *   配置关键指标的告警规则。
 *   **数据管理**：
     *   生产数据库的数据最为关键，需进行严格的备份和恢复策略。
     *   所有数据库模式变更必须经过严格的审查和测试。
 
-## 3. Supabase 管理策略
+## 3. 阿里云 SAE 部署策略
+
+### 3.1 SAE 应用配置
+
+#### 3.1.1 FastAPI BFF 服务
+*   **应用类型**：Java/Python 应用
+*   **技术栈**：Python 3.12 + FastAPI + Uvicorn
+*   **资源配置**：
+    *   **开发环境**：0.5 CPU Core, 1GB Memory, 1 实例
+    *   **预测试环境**：1 CPU Core, 2GB Memory, 1-2 实例
+    *   **生产环境**：2 CPU Core, 4GB Memory, 2-10 实例（自动扩缩容）
+*   **部署包**：使用 Docker 镜像或 JAR/WAR 包
+*   **健康检查**：配置 `/health` 端点，支持 HTTP 健康检查
+
+#### 3.1.2 AI 计算服务
+*   **部署选择**：
+    *   **SAE 应用**：适合需要常驻内存和状态管理的 AI 服务
+    *   **函数计算 (FC)**：适合无状态的 AI 计算任务，成本更优
+*   **资源配置**：
+    *   **开发环境**：1 CPU Core, 2GB Memory
+    *   **预测试环境**：2 CPU Core, 4GB Memory
+    *   **生产环境**：4 CPU Core, 8GB Memory（根据 AI 模型需求调整）
+
+### 3.2 CI/CD 自动化部署
+
+#### 3.2.1 构建流程
+```yaml
+# GitHub Actions 工作流示例
+name: Deploy to SAE
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Build Docker image
+        run: |
+          docker build -t aura-bff:${{ github.sha }} .
+          
+      - name: Push to Alibaba Cloud Container Registry
+        run: |
+          # 推送镜像到阿里云容器镜像服务
+          
+      - name: Deploy to SAE
+        run: |
+          # 使用阿里云 SAE CLI 或 API 进行部署
+```
+
+#### 3.2.2 部署策略
+*   **滚动更新**：默认部署方式，逐步替换实例，确保服务连续性
+*   **蓝绿部署**：生产环境重要更新时使用，零停机切换
+*   **金丝雀发布**：新功能渐进式发布，降低风险
+
+### 3.3 环境变量和配置管理
+
+#### 3.3.1 环境变量配置
+*   **Supabase 配置**：
+    ```env
+    SUPABASE_URL=your_supabase_url
+    SUPABASE_ANON_KEY=your_anon_key
+    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+    ```
+*   **AI 服务配置**：
+    ```env
+    AI_SERVICE_URL=http://ai-service:8080
+    OPENAI_API_KEY=your_openai_key
+    CLAUDE_API_KEY=your_claude_key
+    ```
+*   **支付配置**：
+    ```env
+    STRIPE_SECRET_KEY=your_stripe_key
+    ALIPAY_APP_ID=your_alipay_app_id
+    ```
+
+#### 3.3.2 密钥管理
+*   使用阿里云密钥管理服务 (KMS) 存储敏感信息
+*   在 SAE 应用中配置环境变量，引用 KMS 密钥
+*   定期轮换 API 密钥和数据库密码
+
+### 3.4 监控和日志
+
+#### 3.4.1 应用监控
+*   **阿里云应用实时监控服务 (ARMS)**：
+    *   应用性能监控 (APM)
+    *   业务监控和告警
+    *   链路追踪分析
+*   **关键指标**：
+    *   响应时间 (P95, P99)
+    *   错误率
+    *   吞吐量 (QPS/TPS)
+    *   CPU 和内存使用率
+
+#### 3.4.2 日志管理
+*   **阿里云日志服务 (SLS)**：
+    *   应用日志收集和分析
+    *   错误日志告警
+    *   业务日志统计
+*   **日志格式标准化**：
+    ```json
+    {
+      "timestamp": "2024-01-01T00:00:00Z",
+      "level": "INFO",
+      "service": "aura-bff",
+      "user_id": "user_123",
+      "request_id": "req_456",
+      "message": "User login successful"
+    }
+    ```
+
+### 3.5 安全和网络配置
+
+#### 3.5.1 网络安全
+*   **VPC 配置**：将 SAE 应用部署在专有网络 (VPC) 中
+*   **安全组规则**：仅开放必要的端口（如 80, 443）
+*   **WAF 防护**：使用阿里云 Web 应用防火墙防护常见攻击
+
+#### 3.5.2 SSL 和域名
+*   **自定义域名**：配置自有域名指向 SAE 应用
+*   **SSL 证书**：使用阿里云 SSL 证书服务或 Let's Encrypt
+*   **HTTPS 强制跳转**：确保所有流量都使用 HTTPS
+
+## 4. Supabase 管理策略
 
 ### 3.1 独立 Supabase 项目
 
