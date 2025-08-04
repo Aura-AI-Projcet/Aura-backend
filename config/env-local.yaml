@@ -1,0 +1,82 @@
+# 本地开发环境配置
+# Local Development Environment Configuration
+
+environment: "development"
+debug: true
+
+# API Configuration
+api:
+  host: "127.0.0.1"
+  port: 8000
+  reload: true
+  workers: 1
+
+# Supabase Configuration
+supabase:
+  url: "http://localhost:54321"
+  anon_key: "your_local_anon_key"
+  service_role_key: "your_local_service_role_key"
+
+# Database Configuration  
+database:
+  url: "postgresql://postgres:password@localhost:54322/postgres"
+
+# Algorithm Service Configuration
+algorithm_service:
+  url: "http://localhost:8001"
+  timeout: 30
+  retries: 3
+
+# CORS Configuration
+cors:
+  origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+    - "http://localhost:8080"
+  allow_credentials: true
+
+# External API Configuration
+external_apis:
+  openai:
+    api_key: ""
+    model: "gpt-3.5-turbo"
+  claude:
+    api_key: ""
+    model: "claude-3-sonnet-20240229"
+
+# Payment Configuration (Mock for local)
+payment:
+  stripe:
+    secret_key: "sk_test_..."
+    webhook_secret: "whsec_..."
+    mode: "test"
+  alipay:
+    app_id: ""
+    private_key: ""
+    mode: "sandbox"
+
+# Push Notification Configuration (Mock for local)
+push_notification:
+  fcm:
+    server_key: ""
+  apns:
+    key_id: ""
+    team_id: ""
+    bundle_id: "com.aura.local"
+    environment: "sandbox"
+
+# Logging Configuration
+logging:
+  level: "DEBUG"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/aura-local.log"
+
+# Rate Limiting
+rate_limiting:
+  enabled: false
+  default_limit: "100/hour"
+
+# Security
+security:
+  trusted_hosts: ["*"]
+  allow_credentials: true

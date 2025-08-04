@@ -1,0 +1,139 @@
+# 正式环境配置
+# Production Environment Configuration
+
+environment: "production"
+debug: false
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 4
+
+# Supabase Configuration
+supabase:
+  url: "${SUPABASE_URL}"
+  anon_key: "${SUPABASE_ANON_KEY}"
+  service_role_key: "${SUPABASE_SERVICE_ROLE_KEY}"
+
+# Database Configuration
+database:
+  url: "${DATABASE_URL}"
+  pool_size: 20
+  max_overflow: 40
+  pool_timeout: 30
+  pool_recycle: 3600
+
+# Algorithm Service Configuration
+algorithm_service:
+  url: "${ALGORITHM_SERVICE_URL}"
+  timeout: 90
+  retries: 3
+  circuit_breaker:
+    failure_threshold: 3
+    recovery_timeout: 60
+
+# CORS Configuration
+cors:
+  origins:
+    - "https://aura.com"
+    - "https://api.aura.com"
+    - "https://www.aura.com"
+  allow_credentials: true
+
+# External API Configuration
+external_apis:
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+    max_tokens: 2000
+    temperature: 0.7
+  claude:
+    api_key: "${CLAUDE_API_KEY}"
+    model: "claude-3-opus-20240229"
+    max_tokens: 2000
+    temperature: 0.7
+
+# Payment Configuration
+payment:
+  stripe:
+    secret_key: "${STRIPE_SECRET_KEY}"
+    webhook_secret: "${STRIPE_WEBHOOK_SECRET}"
+    mode: "live"
+  alipay:
+    app_id: "${ALIPAY_APP_ID}"
+    private_key: "${ALIPAY_PRIVATE_KEY}"
+    mode: "live"
+
+# Push Notification Configuration
+push_notification:
+  fcm:
+    server_key: "${FCM_SERVER_KEY}"
+  apns:
+    key_id: "${APNS_KEY_ID}"
+    team_id: "${APNS_TEAM_ID}"
+    bundle_id: "${APNS_BUNDLE_ID}"
+    environment: "production"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(pathname)s:%(lineno)d"
+  file: "logs/aura-production.log"
+  max_size: "50MB"
+  backup_count: 10
+  
+# Monitoring & Metrics
+monitoring:
+  enabled: true
+  prometheus_metrics: true
+  health_check_interval: 15
+  sentry_dsn: "${SENTRY_DSN}"
+  datadog_api_key: "${DATADOG_API_KEY}"
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  default_limit: "500/hour"
+  premium_limit: "10000/hour"
+  burst_limit: "100/minute"
+
+# Security
+security:
+  trusted_hosts:
+    - "aura.com"
+    - "api.aura.com"
+    - "www.aura.com"
+  allow_credentials: true
+  force_https: true
+
+# Cache Configuration
+cache:
+  redis_url: "${REDIS_URL}"
+  default_ttl: 3600
+  max_connections: 100
+
+# SAE Deployment Configuration
+sae:
+  application_name: "aura-bff-production"
+  cpu: "2.0"
+  memory: "4Gi"
+  instances:
+    min: 2
+    max: 10
+  autoscaling:
+    cpu_threshold: 70
+    memory_threshold: 80
+
+# Backup & Recovery
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+
+# Performance
+performance:
+  connection_pool_size: 50
+  request_timeout: 30
+  keep_alive_timeout: 5

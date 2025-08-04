@@ -24,7 +24,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         r"^/api/v1/avatars$",  # Public avatars list
     ]
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """Process request through authentication middleware"""
 
         # Check if route is public
@@ -37,7 +39,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if not auth_header or not auth_header.startswith("Bearer "):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Missing or invalid authorization header"
+                    detail="Missing or invalid authorization header",
                 )
 
             # Extract token
@@ -48,8 +50,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 user_response = supabase_client.auth.get_user(token)
                 if not user_response.user:
                     raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid token"
+                        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
                     )
 
                 user = user_response.user
@@ -62,7 +63,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             except Exception as e:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=f"Token verification failed: {str(e)}"
+                    detail=f"Token verification failed: {str(e)}",
                 )
 
             # Continue to next middleware/endpoint
@@ -76,7 +77,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             # Handle unexpected errors
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"detail": f"Authentication error: {str(e)}"}
+                content={"detail": f"Authentication error: {str(e)}"},
             )
 
     def _is_public_route(self, path: str) -> bool:
@@ -89,19 +90,27 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 def get_current_user_id(request: Request) -> str:
     """Get current user ID from request state"""
-    if not hasattr(request.state, 'user_id'):
+    if not hasattr(request.state, "user_id"):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not authenticated"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated"
         )
-    return request.state.user_id
+    user_id = request.state.user_id
+    if not isinstance(user_id, str):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user ID type"
+        )
+    return user_id
 
 
 def get_current_user(request: Request) -> str:
     """Get current user from request state"""
-    if not hasattr(request.state, 'user'):
+    if not hasattr(request.state, "user"):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not authenticated"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated"
         )
-    return request.state.user
+    user = request.state.user
+    if not hasattr(user, "id"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user object"
+        )
+    return str(user.id)

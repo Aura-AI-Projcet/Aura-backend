@@ -1,0 +1,114 @@
+# 预测试环境配置
+# Staging Environment Configuration
+
+environment: "staging"
+debug: false
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 2
+
+# Supabase Configuration
+supabase:
+  url: "${SUPABASE_URL}"
+  anon_key: "${SUPABASE_ANON_KEY}"
+  service_role_key: "${SUPABASE_SERVICE_ROLE_KEY}"
+
+# Database Configuration
+database:
+  url: "${DATABASE_URL}"
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+
+# Algorithm Service Configuration
+algorithm_service:
+  url: "${ALGORITHM_SERVICE_URL}"
+  timeout: 60
+  retries: 3
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 30
+
+# CORS Configuration  
+cors:
+  origins:
+    - "https://staging.aura.com"
+    - "https://staging-api.aura.com"
+  allow_credentials: true
+
+# External API Configuration
+external_apis:
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+    max_tokens: 1000
+  claude:
+    api_key: "${CLAUDE_API_KEY}"
+    model: "claude-3-sonnet-20240229"
+    max_tokens: 1000
+
+# Payment Configuration
+payment:
+  stripe:
+    secret_key: "${STRIPE_SECRET_KEY}"
+    webhook_secret: "${STRIPE_WEBHOOK_SECRET}"
+    mode: "test"
+  alipay:
+    app_id: "${ALIPAY_APP_ID}"
+    private_key: "${ALIPAY_PRIVATE_KEY}"
+    mode: "sandbox"
+
+# Push Notification Configuration
+push_notification:
+  fcm:
+    server_key: "${FCM_SERVER_KEY}"
+  apns:
+    key_id: "${APNS_KEY_ID}"
+    team_id: "${APNS_TEAM_ID}"
+    bundle_id: "${APNS_BUNDLE_ID}"
+    environment: "sandbox"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/aura-staging.log"
+  max_size: "10MB"
+  backup_count: 5
+
+# Monitoring & Metrics
+monitoring:
+  enabled: true
+  prometheus_metrics: true
+  health_check_interval: 30
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  default_limit: "1000/hour"
+  premium_limit: "5000/hour"
+
+# Security
+security:
+  trusted_hosts: 
+    - "staging.aura.com"
+    - "staging-api.aura.com"
+  allow_credentials: true
+
+# Cache Configuration
+cache:
+  redis_url: "${REDIS_URL}"
+  default_ttl: 3600
+  
+# SAE Deployment Configuration
+sae:
+  application_name: "aura-bff-staging"
+  cpu: "1.0"
+  memory: "2Gi"
+  instances:
+    min: 1
+    max: 3
